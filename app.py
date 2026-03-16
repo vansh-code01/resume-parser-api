@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 import pdfplumber
 import json
+from database import engine, Session, User, Base
+from fastapi import Form
 
 load_dotenv()
 app = FastAPI()
@@ -13,7 +15,11 @@ def home():
     return {"messages" : "Hey everything is working"}
 
 @app.post("/parse-resume")
-def pares_resume(file:UploadFile = File(...)):
+def pares_resume(
+    file:UploadFile = File(...),
+    name: str = Form(...),
+    email: str = Form(...)
+    ):
     result = ""
     with pdfplumber.open(file.file) as f:
         for page in f.pages:
@@ -35,4 +41,13 @@ def pares_resume(file:UploadFile = File(...)):
         ]
     )
     parsed= json.loads(response.choices[0].message.content)
+    new_user = User(
+        name = name,
+        email = email,
+        skills = str(parsed)
+    )
+    session = Session()
+    session.add(new_user)
+    session.commit()
+    session.close()
     return parsed
