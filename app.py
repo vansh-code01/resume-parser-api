@@ -4,8 +4,9 @@ import os
 from dotenv import load_dotenv
 import pdfplumber
 import json
-from database import engine, Session, User, Base
+from database import engine, Session, User, Base, Job
 from fastapi import Form
+import ast
 
 load_dotenv()
 app = FastAPI()
@@ -51,3 +52,47 @@ def pares_resume(
     session.commit()
     session.close()
     return parsed
+
+@app.post("/add-job")
+def add_job(
+    title : str = Form(...),
+    company : str = Form(...),
+    location: str = Form(...),
+    description: str = Form(...),
+    email: str = Form(...)
+):
+    new_job = Job(
+        title = title,
+        company = company,
+        location = location,
+        description = description,
+        email = email
+    )
+    session = Session()
+    session.add(new_job)
+    session.commit()
+    session.close()
+    return {"Message":"Job Created Successfully"}
+
+@app.get("/match-job/{user_id}")
+def match_job(user_id: int):
+    session = Session()
+    user = session.query(User).filter(User.id == user_id).first()
+
+    jobs = session.query(Job).all()
+    print("User skills:", user.skills)  # add this
+    print("Job description:", jobs[0].description) 
+    
+    matched = []
+    skills_dict = ast.literal_eval(user.skills)
+    user_skills_list = []
+    for key in skills_dict:
+        user_skills_list += skills_dict[key]
+
+    for job in jobs:
+        for skills in user_skills_list:
+            if skills.lower() in job.description.lower():
+                matched.append(job)
+                break
+    session.close()
+    return matched

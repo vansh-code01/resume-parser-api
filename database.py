@@ -27,6 +27,16 @@ class User(Base):
     email = Column(String)
     skills = Column(String)
 
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(Integer,primary_key=True )
+    title = Column(String)
+    company = Column(String)
+    location = Column(String)
+    description = Column(String)
+    email = Column(String)
+
 Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
